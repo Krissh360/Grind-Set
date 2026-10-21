@@ -1,5 +1,6 @@
 const express = require("express");
 const Habit = require("../models/Habit");
+const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
 const router = express.Router();
@@ -17,18 +18,43 @@ function verifyToken(req, res, next) {
     next();
 }
 
-function calculateStreak(dates) {
+function toDateKey(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return [date.getFullYear(), date.getMonth(), date.getDate()];
+}
+
+function compareDateKeys(left, right) {
+  return left[0] - right[0] || left[1] - right[1] || left[2] - right[2];
+}
+
+function daysBetween(later, earlier) {
+  return (
+    Date.UTC(later[0], later[1], later[2]) -
+    Date.UTC(earlier[0], earlier[1], earlier[2])
+  ) / (1000 * 60 * 60 * 24);
+}
+
+function datesFromAccount(dates, accountCreatedAt) {
+  const accountStart = toDateKey(accountCreatedAt);
+
+  return dates
+    .map(toDateKey)
+    .filter((date) => date && (!accountStart || compareDateKeys(date, accountStart) >= 0))
+    .sort((left, right) => compareDateKeys(left, right));
+}
+
+function calculateStreak(dates, accountCreatedAt) {
   if (!dates || dates.length === 0) return 0;
 
-  const sortedDates = dates
-    .map(d => new Date(d))
-    .sort((a, b) => b - a);
+  const sortedDates = datesFromAccount(dates, accountCreatedAt).reverse();
+  if (sortedDates.length === 0) return 0;
 
   let streak = 1;
 
   for (let i = 1; i < sortedDates.length; i++) {
-    const diff =
-      (sortedDates[i - 1] - sortedDates[i]) / (1000 * 60 * 60 * 24);
+    const diff = daysBetween(sortedDates[i - 1], sortedDates[i]);
 
     if (diff === 1) {
       streak++;
@@ -40,19 +66,17 @@ function calculateStreak(dates) {
   return streak;
 }
 
-function calculateLongestStreak(dates) {
+function calculateLongestStreak(dates, accountCreatedAt) {
   if (!dates || dates.length === 0) return 0;
 
-  const sortedDates = dates
-    .map(d => new Date(d))
-    .sort((a, b) => a - b);
+  const sortedDates = datesFromAccount(dates, accountCreatedAt);
+  if (sortedDates.length === 0) return 0;
 
   let longest = 1;
   let current = 1;
 
   for (let i = 1; i < sortedDates.length; i++) {
-    const diff =
-      (sortedDates[i] - sortedDates[i - 1]) / (1000 * 60 * 60 * 24);
+    const diff = daysBetween(sortedDates[i], sortedDates[i - 1]);
 
     if (diff === 1) {
       current++;
@@ -63,6 +87,23 @@ function calculateLongestStreak(dates) {
   }
 
   return longest;
+}
+
+async function getAccountCreatedAt(userId, habits) {
+  const user = await User.findById(userId).select("createdAt");
+  if (user?.createdAt) return user.createdAt;
+
+  const completionDates = habits.flatMap((habit) => habit.completedDates || []);
+  const habitDates = habits.map((habit) => habit.createdAt).filter(Boolean);
+  const legacyDates = [...completionDates, ...habitDates]
+    .map((date) => new Date(date))
+    .filter((date) => !Number.isNaN(date.getTime()));
+  const createdAt = legacyDates.length
+    ? new Date(Math.min(...legacyDates.map((date) => date.getTime())))
+    : new Date();
+
+  await User.updateOne({ _id: userId }, { $set: { createdAt } });
+  return createdAt;
 }
 
 router.post("/", verifyToken, async (req, res) => {
@@ -94,16 +135,18 @@ router.post("/", verifyToken, async (req, res) => {
 router.get("/", verifyToken, async (req, res) => {
 
   const habits = await Habit.find({ userId: req.userId });
+  const accountCreatedAt = await getAccountCreatedAt(req.userId, habits);
 
   const updatedHabits = habits.map(habit => {
-    const currentStreak = calculateStreak(habit.completedDates);
-    const longestStreak = calculateLongestStreak(habit.completedDates);
+    const currentStreak = calculateStreak(habit.completedDates, accountCreatedAt);
+    const longestStreak = calculateLongestStreak(habit.completedDates, accountCreatedAt);
 
     return {
       ...habit._doc,
       currentStreak,
       longestStreak,
-      totalCompleted: habit.completedDates.length
+      totalCompleted: datesFromAccount(habit.completedDates, accountCreatedAt).length,
+      accountCreatedAt
     };
   });
 
@@ -135,6 +178,7 @@ router.put("/complete/:id", verifyToken, async (req, res) => {
 router.get("/analytics", verifyToken, async (req, res) => {
   try {
     const habits = await Habit.find({ userId: req.userId });
+    const accountCreatedAt = await getAccountCreatedAt(req.userId, habits);
 
     const totalHabits = habits.length;
 
@@ -144,11 +188,11 @@ router.get("/analytics", verifyToken, async (req, res) => {
     let maxCompleted = 0;
 
     habits.forEach(habit => {
-      const completed = habit.completedDates.length;
+      const completed = datesFromAccount(habit.completedDates, accountCreatedAt).length;
 
       totalCompletions += completed;
 
-      const streak = calculateStreak(habit.completedDates);
+      const streak = calculateStreak(habit.completedDates, accountCreatedAt);
       totalStreak += streak;
 
       if (completed > maxCompleted) {

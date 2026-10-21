@@ -144,6 +144,18 @@ export default function Dashboard() {
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const currentDayIndex = (new Date().getDay() + 6) % 7; // 0 for Mon ... 6 for Sun
   const dayOfMonth = new Date().getDate();
+  const storedAccountCreatedAt = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}").createdAt;
+    } catch (error) {
+      return null;
+    }
+  })();
+  const accountCreatedAt = storedAccountCreatedAt || habits.find((habit) => habit.accountCreatedAt)?.accountCreatedAt;
+  const accountCreatedDate = accountCreatedAt ? new Date(accountCreatedAt) : null;
+  const completedDates = new Set(
+    habits.flatMap((habit) => habit.completedDates || [])
+  );
   const motivation = motivationQuotes[(dayOfMonth - 1) % motivationQuotes.length];
 
   if (loading) {
@@ -358,9 +370,18 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-7 gap-2 text-center">
               {daysOfWeek.map((day, idx) => {
+                const daysFromToday = currentDayIndex - idx;
+                const date = new Date();
+                date.setDate(date.getDate() - daysFromToday);
+                const accountStart = accountCreatedDate && new Date(
+                  accountCreatedDate.getFullYear(),
+                  accountCreatedDate.getMonth(),
+                  accountCreatedDate.getDate()
+                );
+                const isBeforeAccount = accountStart && date < accountStart;
+                const isCompletedDay = !isBeforeAccount && completedDates.has(date.toDateString());
                 const isPastOrToday = idx <= currentDayIndex;
-                const isCompletedDay = idx < currentDayIndex || (idx === currentDayIndex && completionPercent === 100 && totalHabits > 0);
-                const isPartial = idx === currentDayIndex && completionPercent > 0 && completionPercent < 100;
+                const isPartial = !isBeforeAccount && idx === currentDayIndex && completionPercent > 0 && completionPercent < 100;
 
                 return (
                   <div key={day} className="flex flex-col items-center gap-2">
