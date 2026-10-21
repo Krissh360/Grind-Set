@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { User, Mail, ShieldCheck, LogOut, Save } from "lucide-react";
-import { updateProfile } from "../services/api";
+import { User, Mail, ShieldCheck, LogOut, Save, Trash2 } from "lucide-react";
+import { deleteAccount, updateProfile } from "../services/api";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -9,6 +9,10 @@ export default function Settings() {
   const [username, setUsername] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -44,7 +48,25 @@ export default function Settings() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("rememberMe");
     navigate("/"); // or "/login" depending on your route
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== "DELETE") return;
+
+    try {
+      setDeleting(true);
+      setDeleteError("");
+      await deleteAccount();
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("rememberMe");
+      navigate("/?mode=signup");
+    } catch (err) {
+      setDeleteError(err.message);
+      setDeleting(false);
+    }
   };
 
   return (
@@ -141,6 +163,70 @@ export default function Settings() {
           </button>
         </div>
       </div>
+
+      <div className="bg-white dark:bg-zinc-900 border border-rose-200/80 dark:border-rose-900/60 shadow-sm rounded-2xl p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-rose-700 dark:text-rose-400">Danger Zone</h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
+              Permanently remove your account and all habit history.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setDeleteConfirmation("");
+              setDeleteError("");
+              setShowDeleteModal(true);
+            }}
+            className="inline-flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 dark:text-rose-400 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete account
+          </button>
+        </div>
+      </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 dark:bg-black/70 p-4">
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl p-6">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100">Delete your account?</h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 leading-relaxed">
+              This permanently deletes your account, habits, streaks, and completion history. This action cannot be undone.
+            </p>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mt-5 mb-1.5">
+              Type DELETE to confirm
+            </label>
+            <input
+              type="text"
+              value={deleteConfirmation}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              disabled={deleting}
+              autoFocus
+              className="w-full bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+            />
+            {deleteError && <p className="text-xs text-rose-600 dark:text-rose-400 mt-2">{deleteError}</p>}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmation !== "DELETE" || deleting}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+              >
+                {deleting ? "Deleting..." : "Delete account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,9 @@ require("dotenv").config();
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const User = require("../models/User");
+const Habit = require("../models/Habit");
 
 function verifyToken(req, res, next) {
   try {
@@ -83,6 +85,30 @@ router.get("/me", verifyToken, async (req, res) => {
     res.json({ user });
   } catch (err) {
     res.status(500).json({ message: "Unable to validate session" });
+  }
+});
+
+router.delete("/account", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+    await Habit.deleteMany({ userId: req.userId }).session(session);
+    const result = await User.deleteOne({ _id: req.userId }).session(session);
+
+    if (result.deletedCount !== 1) {
+      throw new Error("User not found");
+    }
+
+    await session.commitTransaction();
+    res.json({ message: "Account deleted successfully" });
+  } catch (err) {
+    await session.abortTransaction();
+    res.status(err.message === "User not found" ? 404 : 500).json({
+      message: err.message === "User not found" ? err.message : "Unable to delete account",
+    });
+  } finally {
+    await session.endSession();
   }
 });
 
