@@ -6,16 +6,19 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 
 function verifyToken(req, res, next) {
-
-    const authHeader = req.headers["authorization"];
-    if (!authHeader) return res.json({ message: "No token" });
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "No token" });
+    }
 
     const token = authHeader.split(" ")[1];
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.id;
-
     next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
 }
 
 function toDateKey(value) {
@@ -50,6 +53,8 @@ function calculateStreak(dates, accountCreatedAt) {
 
   const sortedDates = datesFromAccount(dates, accountCreatedAt).reverse();
   if (sortedDates.length === 0) return 0;
+
+  if (compareDateKeys(sortedDates[0], toDateKey(new Date())) !== 0) return 0;
 
   let streak = 1;
 
@@ -161,7 +166,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 
 // MARK HABIT COMPLETE
 router.put("/complete/:id", verifyToken, async (req, res) => {
-  const habit = await Habit.findById(req.params.id);
+  const habit = await Habit.findOne({ _id: req.params.id, userId: req.userId });
 
   if (!habit) return res.json({ message: "Habit not found" });
 

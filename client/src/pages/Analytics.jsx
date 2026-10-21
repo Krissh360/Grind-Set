@@ -17,9 +17,14 @@ export default function Analytics() {
   useEffect(() => {
     async function fetchAnalytics() {
       try {
-        const [analytics, habitData] = await Promise.all([getAnalytics(), getHabits()]);
+        const analytics = await getAnalytics();
         setData(analytics);
-        setHabits(habitData);
+        try {
+          const habitData = await getHabits();
+          setHabits(habitData);
+        } catch (err) {
+          console.error(err);
+        }
       } catch (err) {
         console.error(err);
       } finally {

@@ -98,10 +98,6 @@ export default function Dashboard() {
     h.completedDates?.includes(today)
   ).length;
 
-  const remaining = habits.filter(
-    h => !h.completedDates?.includes(today)
-  );
-
   const completionPercent =
     totalHabits > 0
       ? Math.round((completedToday / totalHabits) * 100)
