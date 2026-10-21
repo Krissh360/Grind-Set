@@ -40,6 +40,43 @@ export async function loginUser(data) {
   return result;
 }
 
+export async function getCurrentUser() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${BASE_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Session expired");
+  }
+
+  return data;
+}
+
+export async function deleteAccount() {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${BASE_URL}/auth/account`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Unable to delete account");
+  }
+
+  return data;
+}
+
 export async function updateProfile(username) {
   const token = localStorage.getItem("token");
 
