@@ -1,17 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser, registerUser } from "../services/api";
+import { getCurrentUser, loginUser, registerUser } from "../services/api";
 import { ArrowRight, Lock, Mail, UserRound } from "lucide-react";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
 
   const [isLogin, setIsLogin] = useState(true);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!localStorage.getItem("token")) return;
+
+    getCurrentUser()
+      .then(({ user }) => {
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        localStorage.setItem("user", JSON.stringify({ ...storedUser, ...user }));
+        navigate("/dashboard", { replace: true });
+      })
+      .catch(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      });
+  }, [navigate]);
 
   const handleAuth = async () => {
     try {
@@ -30,7 +46,7 @@ export default function Auth() {
       let data;
 
       if (isLogin) {
-        data = await loginUser({ email, password });
+        data = await loginUser({ email, password, rememberMe });
 
         localStorage.setItem("token", data.token);
 
@@ -153,6 +169,18 @@ export default function Auth() {
               />
             </div>
           </div>
+
+          {isLogin && (
+            <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500/20"
+              />
+              Remember me for 30 days
+            </label>
+          )}
 
           <button
             onClick={handleAuth}

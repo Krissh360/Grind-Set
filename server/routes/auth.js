@@ -57,7 +57,7 @@ router.post("/register", async (req, res) => {
 // LOGIN
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json("User not found");
@@ -65,12 +65,24 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json("Invalid credentials");
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    const tokenOptions = rememberMe ? { expiresIn: "30d" } : {};
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, tokenOptions);
 
     const { password: pwd, ...others } = user._doc;
 res.json({ token, user: others });
   } catch (err) {
     res.status(500).json(err.message);
+  }
+});
+
+router.get("/me", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: "Unable to validate session" });
   }
 });
 
