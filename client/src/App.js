@@ -14,7 +14,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 // Layout wrapper for authenticated pages
 function AppLayout({ children }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 font-sans">
+    <div className="flex h-screen overflow-hidden font-sans" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Navbar />
