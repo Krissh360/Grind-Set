@@ -10,16 +10,37 @@ import {
   Moon,
 } from "lucide-react";
 
+// Theme is remembered per user, with a device-wide fallback
+const getUserId = () => {
+  try {
+    const u = JSON.parse(localStorage.getItem("user") || "{}");
+    return u._id || u.id || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const getSavedTheme = () => {
+  const id = getUserId();
+  return (id && localStorage.getItem(`theme:${id}`)) || localStorage.getItem("theme");
+};
+
+const saveTheme = (value) => {
+  const id = getUserId();
+  if (id) localStorage.setItem(`theme:${id}`, value);
+  localStorage.setItem("theme", value);
+};
+
 export default function Sidebar() {
   const location = useLocation();
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     // Check initial dark mode from DOM or localStorage
-    const isDarkMode =
-      localStorage.getItem("theme") === "dark" ||
-      (!("theme" in localStorage) &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const saved = getSavedTheme();
+    const isDarkMode = saved
+      ? saved === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
 
     setIsDark(isDarkMode);
     if (isDarkMode) {
@@ -34,10 +55,10 @@ export default function Sidebar() {
     setIsDark(nextDark);
     if (nextDark) {
       document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
+      saveTheme("dark");
     } else {
       document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
+      saveTheme("light");
     }
     window.dispatchEvent(new Event("themeUpdated"));
   };
