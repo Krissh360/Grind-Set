@@ -1,12 +1,53 @@
 import { useEffect, useState } from "react";
 import { getHabits } from "../services/api";
-import { AlertCircle, Quote } from "lucide-react";
+import { AlertCircle, Quote, Pencil } from "lucide-react";
+
+const DEFAULT_QUOTE =
+  "Small habits build monumental results. Focus on executing today's tasks without worrying about tomorrow, and let compounding momentum do the rest.";
+
+const quoteKey = () => {
+  try {
+    const u = JSON.parse(localStorage.getItem("user") || "{}");
+    const id = u._id || u.id;
+    return id ? `profileQuote:${id}` : "profileQuote";
+  } catch (e) {
+    return "profileQuote";
+  }
+};
 
 export default function Profile() {
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [customQuote, setCustomQuote] = useState(() => {
+    try {
+      return localStorage.getItem(quoteKey()) || "";
+    } catch (e) {
+      return "";
+    }
+  });
+  const [editingQuote, setEditingQuote] = useState(false);
+  const [quoteDraft, setQuoteDraft] = useState("");
+
+  const startEditQuote = () => {
+    setQuoteDraft(customQuote || DEFAULT_QUOTE);
+    setEditingQuote(true);
+  };
+
+  const saveQuote = () => {
+    const trimmed = quoteDraft.trim();
+    // Blank or unchanged-from-default reverts to the default quote
+    const next = trimmed === DEFAULT_QUOTE ? "" : trimmed;
+    try {
+      if (next) localStorage.setItem(quoteKey(), next);
+      else localStorage.removeItem(quoteKey());
+    } catch (e) {
+      // storage unavailable; keep in memory only
+    }
+    setCustomQuote(next);
+    setEditingQuote(false);
+  };
 
   useEffect(() => {
     try {
@@ -212,15 +253,87 @@ export default function Profile() {
           borderLeft: '3px solid var(--color-accent)',
         }}
       >
-        <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
-          <Quote className="w-4 h-4" style={{ color: 'var(--color-accent)' }} />
-          <h2
-            className="font-medium"
-            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)' }}
-          >
-            Philosophy of calm consistency
-          </h2>
+        <div className="flex items-center justify-between gap-2" style={{ marginBottom: 10 }}>
+          <div className="flex items-center gap-2">
+            <Quote className="w-4 h-4" style={{ color: 'var(--color-accent)' }} />
+            <h2
+              className="font-medium"
+              style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)' }}
+            >
+              Philosophy of calm consistency
+            </h2>
+          </div>
+          {!editingQuote && (
+            <button
+              type="button"
+              onClick={startEditQuote}
+              aria-label="Edit quote"
+              className="flex items-center justify-center"
+              style={{ width: 32, height: 32, color: 'var(--color-muted)', borderRadius: 'var(--radius-sm)' }}
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
         </div>
+        {editingQuote ? (
+          <div>
+            <textarea
+              value={quoteDraft}
+              onChange={(e) => setQuoteDraft(e.target.value)}
+              rows={4}
+              maxLength={300}
+              autoFocus
+              placeholder="Leave blank to use the default quote"
+              style={{
+                width: '100%',
+                backgroundColor: 'var(--color-bg)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '8px 12px',
+                fontSize: 'var(--text-body)',
+                color: 'var(--color-text)',
+                lineHeight: 'var(--lh-body)',
+                resize: 'vertical',
+              }}
+            />
+            <div className="flex flex-wrap items-center gap-2" style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                onClick={saveQuote}
+                className="font-medium"
+                style={{
+                  backgroundColor: 'var(--color-navy)',
+                  color: 'var(--color-surface)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '6px 14px',
+                  fontSize: 'var(--text-body)',
+                }}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingQuote(false)}
+                style={{
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '6px 14px',
+                  fontSize: 'var(--text-body)',
+                  color: 'var(--color-text)',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuoteDraft(DEFAULT_QUOTE)}
+                style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', padding: '6px 8px' }}
+              >
+                Reset to default
+              </button>
+            </div>
+          </div>
+        ) : (
         <p
           className="italic"
           style={{
@@ -230,8 +343,9 @@ export default function Profile() {
             maxWidth: '640px',
           }}
         >
-          “Small habits build monumental results. Focus on executing today's tasks without worrying about tomorrow, and let compounding momentum do the rest.”
+          “{customQuote || DEFAULT_QUOTE}”
         </p>
+        )}
       </div>
     </div>
   );
