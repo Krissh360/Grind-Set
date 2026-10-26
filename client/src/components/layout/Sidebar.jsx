@@ -10,7 +10,7 @@ import {
   Moon,
 } from "lucide-react";
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }) {
   const location = useLocation();
   const [isDark, setIsDark] = useState(false);
 
@@ -51,8 +51,19 @@ export default function Sidebar() {
   ];
 
   return (
+    <>
+    {/* Backdrop — mobile drawer only */}
+    <div
+      onClick={onClose}
+      aria-hidden="true"
+      className={`md:hidden fixed inset-0 z-30 bg-black/40 transition-opacity duration-200 ${
+        open ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+    />
     <aside
-      className="w-64 flex-shrink-0 p-5 flex flex-col justify-between select-none"
+      className={`fixed md:relative inset-y-0 left-0 z-40 w-64 max-w-[80vw] flex-shrink-0 p-5 flex flex-col justify-between select-none overflow-y-auto transition-all duration-200 ease-out ${
+        open ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:-ml-64"
+      }`}
       style={{
         backgroundColor: 'var(--color-surface)',
         borderRight: '1px solid var(--color-border)',
@@ -85,6 +96,9 @@ export default function Sidebar() {
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={() => {
+                  if (window.innerWidth < 768) onClose();
+                }}
                 className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium"
                 style={{
                   borderRadius: 'var(--radius-sm)',
@@ -157,5 +171,6 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }

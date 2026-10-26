@@ -135,3 +135,22 @@
   border-radius: var(--radius-sm);
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
+/* Small-screen adjustments */
+html, body { overflow-x: hidden; }
+
+@media (max-width: 640px) {
+  :root {
+    --text-page-title: 20px;
+  }
+
+  /* Cards use inline 24px padding; tighten on phones */
+  [style*="padding: 24px"],
+  [style*="padding: 32px"] {
+    padding: 16px !important;
+  }
+
+  input, textarea, select {
+    min-width: 0;
+    font-size: 16px; /* prevent iOS zoom on focus */
+  }
+}

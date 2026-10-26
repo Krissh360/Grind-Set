@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
@@ -13,12 +14,15 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 
 // Layout wrapper for authenticated pages
 function AppLayout({ children }) {
+  // Open by default on desktop, closed (drawer) on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
+
   return (
-    <div className="flex h-screen overflow-hidden font-sans" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
-      <Sidebar />
+    <div className="flex h-screen h-[100dvh] overflow-hidden font-sans" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Navbar />
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+        <Navbar onToggleSidebar={() => setSidebarOpen((o) => !o)} sidebarOpen={sidebarOpen} />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

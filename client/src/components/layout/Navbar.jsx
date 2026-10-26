@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { Menu } from "lucide-react";
 
-export default function Navbar() {
+export default function Navbar({ onToggleSidebar, sidebarOpen }) {
   const [userName, setUserName] = useState("User");
 
   const formatFirstName = (rawName) => {
@@ -37,22 +38,38 @@ export default function Navbar() {
 
   return (
     <header
-      className="h-16 px-8 flex items-center justify-between select-none"
+      className="h-16 px-4 sm:px-8 flex items-center justify-between select-none flex-shrink-0"
       style={{
         backgroundColor: 'var(--color-surface)',
         borderBottom: '1px solid var(--color-border)',
       }}
     >
-      {/* Date — plain muted text, no chip */}
-      <span
-        className="hidden sm:block font-medium"
-        style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}
-      >
-        {todayFormatted}
-      </span>
+      <div className="flex items-center gap-3">
+        {/* Sidebar toggle */}
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+          aria-expanded={sidebarOpen}
+          className="flex items-center justify-center"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--color-text)',
+          }}
+        >
+          <Menu className="w-5 h-5" style={{ strokeWidth: 1.5 }} />
+        </button>
 
-      {/* Spacer for mobile when date is hidden */}
-      <span className="sm:hidden" />
+        {/* Date — plain muted text, no chip */}
+        <span
+          className="hidden sm:block font-medium"
+          style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}
+        >
+          {todayFormatted}
+        </span>
+      </div>
 
       {/* Profile pill */}
       <div
