@@ -51,21 +51,28 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r border-slate-200/80 dark:border-zinc-800/80 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md p-5 flex flex-col justify-between select-none">
+    <aside
+      className="w-64 flex-shrink-0 p-5 flex flex-col justify-between select-none"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderRight: '1px solid var(--color-border)',
+      }}
+    >
       <div>
         {/* Top Branding */}
         <div className="flex items-center gap-3 px-2 py-3 mb-6">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shadow-sm shadow-emerald-500/20 overflow-hidden">
+          <div
+            className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0"
+            style={{ borderRadius: 'var(--radius-sm)' }}
+          >
             <img src="/flame-logo.png" alt="Grind Set" className="w-8 h-8" />
           </div>
-          <div className="leading-tight">
-            <span className="font-bold text-base tracking-tight text-slate-900 dark:text-zinc-100 block">
-              Grind Set
-            </span>
-            <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500 tracking-wide uppercase">
-              Daily Momentum
-            </span>
-          </div>
+          <span
+            className="font-semibold tracking-tight block"
+            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)' }}
+          >
+            Grind Set
+          </span>
         </div>
 
         {/* Navigation Items */}
@@ -78,18 +85,33 @@ export default function Sidebar() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`px-3.5 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 transition-all duration-150 ${
-                  isActive
-                    ? "bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
-                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-zinc-800/60"
-                }`}
+                className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium"
+                style={{
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: isActive ? 'var(--color-subtle)' : 'transparent',
+                  color: isActive ? 'var(--color-navy)' : 'var(--color-muted)',
+                  borderLeft: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
+                  transition: 'color 150ms ease-out, background-color 150ms ease-out',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'var(--color-subtle)';
+                    e.currentTarget.style.color = 'var(--color-text)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--color-muted)';
+                  }
+                }}
               >
                 <Icon
-                  className={`w-4 h-4 transition-colors ${
-                    isActive
-                      ? "text-emerald-400 dark:text-emerald-600"
-                      : "text-slate-400 dark:text-zinc-500"
-                  }`}
+                  className="w-4 h-4"
+                  style={{
+                    color: isActive ? 'var(--color-accent)' : 'var(--color-muted)',
+                    strokeWidth: 1.5,
+                  }}
                 />
                 <span>{item.name}</span>
               </Link>
@@ -99,22 +121,36 @@ export default function Sidebar() {
       </div>
 
       {/* Footer / Theme Toggle Switch */}
-      <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/80 px-2 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
-        <span className="text-xs font-medium">Theme</span>
+      <div
+        className="pt-4 px-2 flex items-center justify-between"
+        style={{
+          borderTop: '1px solid var(--color-border)',
+          fontSize: 'var(--text-caption)',
+          color: 'var(--color-muted)',
+        }}
+      >
+        <span className="font-medium">Theme</span>
         <button
           onClick={toggleTheme}
           type="button"
           aria-label="Toggle dark/light mode"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700/80 bg-slate-50 dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700/80 text-slate-700 dark:text-zinc-300 text-xs font-medium transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 font-medium"
+          style={{
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--color-border)',
+            backgroundColor: 'var(--color-bg)',
+            color: 'var(--color-text)',
+            fontSize: 'var(--text-caption)',
+          }}
         >
           {isDark ? (
             <>
-              <Moon className="w-3.5 h-3.5 text-emerald-400" />
+              <Moon className="w-3.5 h-3.5" style={{ color: 'var(--color-accent)' }} />
               <span>Dark</span>
             </>
           ) : (
             <>
-              <Sun className="w-3.5 h-3.5 text-amber-500" />
+              <Sun className="w-3.5 h-3.5" style={{ color: 'var(--color-accent)' }} />
               <span>Light</span>
             </>
           )}
@@ -123,4 +159,3 @@ export default function Sidebar() {
     </aside>
   );
 }
-
