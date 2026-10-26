@@ -21,6 +21,18 @@
     <title>Grind Set — Daily Momentum</title>
   </head>
   <body>
+    <script>
+      // Apply saved theme before first paint (per-user, falls back to device-wide)
+      (function () {
+        try {
+          var u = JSON.parse(localStorage.getItem("user") || "{}");
+          var id = u._id || u.id;
+          var t = (id && localStorage.getItem("theme:" + id)) || localStorage.getItem("theme");
+          var dark = t ? t === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          if (dark) document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     

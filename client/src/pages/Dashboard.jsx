@@ -349,6 +349,106 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* 4. Two-column row: Streak + 7-day activity */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Streak block */}
+        <div
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: 24,
+          }}
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span
+                className="tabular-nums font-semibold"
+                style={{ fontSize: 'var(--text-page-title)', color: 'var(--color-text)', lineHeight: 'var(--lh-title)', display: 'block' }}
+              >
+                {currentStreak} days
+              </span>
+              <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}>
+                Current streak
+              </span>
+            </div>
+            <div>
+              <span
+                className="tabular-nums font-semibold"
+                style={{ fontSize: 'var(--text-page-title)', color: 'var(--color-text)', lineHeight: 'var(--lh-title)', display: 'block' }}
+              >
+                {bestStreak} days
+              </span>
+              <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}>
+                Best streak
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 7-day activity */}
+        <div
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: 24,
+          }}
+        >
+          <h2
+            className="font-medium"
+            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)', marginBottom: 16 }}
+          >
+            7-day activity
+          </h2>
+
+          <div className="grid grid-cols-7 gap-2 text-center">
+            {daysOfWeek.map((day, idx) => {
+              // Calculate the date for this day of the week
+              const daysFromToday = currentDayIndex - idx;
+              const date = new Date();
+              date.setDate(date.getDate() - daysFromToday);
+
+              const accountStart = accountCreatedDate && new Date(
+                accountCreatedDate.getFullYear(),
+                accountCreatedDate.getMonth(),
+                accountCreatedDate.getDate()
+              );
+              const isBeforeAccount = accountStart && date < accountStart;
+              const isCompletedDay = !isBeforeAccount && completedDates.has(date.toDateString());
+              const isToday = idx === currentDayIndex;
+
+              return (
+                <div key={day} className="flex flex-col items-center gap-2">
+                  <span
+                    className="font-medium"
+                    style={{
+                      fontSize: 'var(--text-caption)',
+                      color: isToday ? 'var(--color-text)' : 'var(--color-muted)',
+                      fontWeight: isToday ? 600 : 400,
+                    }}
+                  >
+                    {day}
+                  </span>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: isCompletedDay
+                        ? 'var(--color-accent)'
+                        : 'var(--color-border)',
+                      border: isToday ? '2px solid var(--color-accent)' : 'none',
+                      boxSizing: 'content-box',
+                    }}
+                    title={`${day}: ${isToday ? 'Today' : date.toDateString()}`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
       {/* 4. Today's habits — main surface, one card */}
       <div
         style={{
@@ -498,106 +598,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* 4. Two-column row: Streak + 7-day activity */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Streak block */}
-        <div
-          style={{
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
-            padding: 24,
-          }}
-        >
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <span
-                className="tabular-nums font-semibold"
-                style={{ fontSize: 'var(--text-page-title)', color: 'var(--color-text)', lineHeight: 'var(--lh-title)', display: 'block' }}
-              >
-                {currentStreak} days
-              </span>
-              <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}>
-                Current streak
-              </span>
-            </div>
-            <div>
-              <span
-                className="tabular-nums font-semibold"
-                style={{ fontSize: 'var(--text-page-title)', color: 'var(--color-text)', lineHeight: 'var(--lh-title)', display: 'block' }}
-              >
-                {bestStreak} days
-              </span>
-              <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}>
-                Best streak
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* 7-day activity */}
-        <div
-          style={{
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
-            padding: 24,
-          }}
-        >
-          <h2
-            className="font-medium"
-            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)', marginBottom: 16 }}
-          >
-            7-day activity
-          </h2>
-
-          <div className="grid grid-cols-7 gap-2 text-center">
-            {daysOfWeek.map((day, idx) => {
-              // Calculate the date for this day of the week
-              const daysFromToday = currentDayIndex - idx;
-              const date = new Date();
-              date.setDate(date.getDate() - daysFromToday);
-
-              const accountStart = accountCreatedDate && new Date(
-                accountCreatedDate.getFullYear(),
-                accountCreatedDate.getMonth(),
-                accountCreatedDate.getDate()
-              );
-              const isBeforeAccount = accountStart && date < accountStart;
-              const isCompletedDay = !isBeforeAccount && completedDates.has(date.toDateString());
-              const isToday = idx === currentDayIndex;
-
-              return (
-                <div key={day} className="flex flex-col items-center gap-2">
-                  <span
-                    className="font-medium"
-                    style={{
-                      fontSize: 'var(--text-caption)',
-                      color: isToday ? 'var(--color-text)' : 'var(--color-muted)',
-                      fontWeight: isToday ? 600 : 400,
-                    }}
-                  >
-                    {day}
-                  </span>
-                  <div
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      backgroundColor: isCompletedDay
-                        ? 'var(--color-accent)'
-                        : 'var(--color-border)',
-                      border: isToday ? '2px solid var(--color-accent)' : 'none',
-                      boxSizing: 'content-box',
-                    }}
-                    title={`${day}: ${isToday ? 'Today' : date.toDateString()}`}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
