@@ -36,31 +36,47 @@ export default function Navbar() {
   }).format(new Date());
 
   return (
-    <header className="h-16 px-8 border-b border-slate-200/80 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md flex items-center justify-between select-none">
-      <div className="flex items-center gap-3">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-          Workspace
-        </span>
-        <span className="text-slate-300 dark:text-zinc-700">/</span>
-        <span className="text-sm font-medium text-slate-700 dark:text-zinc-300">
-          Personal Habits
-        </span>
-      </div>
+    <header
+      className="h-16 px-8 flex items-center justify-between select-none"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderBottom: '1px solid var(--color-border)',
+      }}
+    >
+      {/* Date — plain muted text, no chip */}
+      <span
+        className="hidden sm:block font-medium"
+        style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}
+      >
+        {todayFormatted}
+      </span>
 
-      <div className="flex items-center gap-4">
-        <div className="hidden sm:block text-xs font-medium text-slate-400 dark:text-zinc-500 bg-slate-100/70 dark:bg-zinc-800/60 px-3 py-1.5 rounded-lg border border-slate-200/60 dark:border-zinc-700/50">
-          {todayFormatted}
-        </div>
+      {/* Spacer for mobile when date is hidden */}
+      <span className="sm:hidden" />
 
-        {/* Profile Pill */}
-        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-semibold shadow-sm text-slate-700 dark:text-zinc-300">
-          <div className="w-5 h-5 rounded-full bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center text-[10px] font-bold">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <span>{userName}</span>
+      {/* Profile pill */}
+      <div
+        className="flex items-center gap-2.5 px-3 py-1.5 font-semibold"
+        style={{
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--color-border)',
+          backgroundColor: 'var(--color-surface)',
+          color: 'var(--color-text)',
+          fontSize: 'var(--text-caption)',
+        }}
+      >
+        <div
+          className="w-5 h-5 rounded-full flex items-center justify-center font-semibold"
+          style={{
+            backgroundColor: 'var(--color-navy)',
+            color: 'var(--color-surface)',
+            fontSize: '10px',
+          }}
+        >
+          {userName.charAt(0).toUpperCase()}
         </div>
+        <span>{userName}</span>
       </div>
     </header>
   );
 }
-
