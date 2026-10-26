@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
 import { getHabits } from "../services/api";
-import {
-  Flame,
-  Award,
-  CalendarCheck,
-  Sparkles,
-} from "lucide-react";
+import { AlertCircle, Quote } from "lucide-react";
 
 export default function Profile() {
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -24,10 +20,12 @@ export default function Profile() {
 
     async function fetchData() {
       try {
+        setError(null);
         const data = await getHabits();
         setHabits(data);
       } catch (err) {
         console.error(err);
+        setError("Failed to load profile data.");
       } finally {
         setLoading(false);
       }
@@ -36,18 +34,56 @@ export default function Profile() {
     fetchData();
   }, []);
 
+  // Skeleton
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex items-center gap-3 text-slate-500 dark:text-zinc-400">
-          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-medium">Loading profile...</span>
+      <div className="space-y-6">
+        <div>
+          <div className="skeleton" style={{ width: 140, height: 28, marginBottom: 8 }} />
+          <div className="skeleton" style={{ width: 240, height: 16 }} />
+        </div>
+        <div style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+          <div className="flex items-center gap-4">
+            <div className="skeleton" style={{ width: 56, height: 56, borderRadius: 'var(--radius-md)' }} />
+            <div>
+              <div className="skeleton" style={{ width: 160, height: 20, marginBottom: 8 }} />
+              <div className="skeleton" style={{ width: 200, height: 14 }} />
+            </div>
+          </div>
+        </div>
+        <div style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+          <div className="skeleton" style={{ width: 180, height: 16, marginBottom: 12 }} />
+          <div className="skeleton" style={{ width: '85%', height: 16 }} />
         </div>
       </div>
     );
   }
 
-  // 🔹 Derived Info
+  // Error
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 400 }}>
+        <AlertCircle className="w-8 h-8" style={{ color: 'var(--color-error)' }} />
+        <p className="font-medium" style={{ fontSize: 'var(--text-body)', color: 'var(--color-text)' }}>{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 font-medium"
+          style={{
+            backgroundColor: 'var(--color-navy)',
+            color: 'var(--color-surface)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: 'var(--text-body)',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Derived
   const totalHabits = habits.length;
 
   const bestHabit = habits.reduce((max, h) =>
@@ -60,109 +96,141 @@ export default function Profile() {
     {}
   );
 
-  const displayName = user?.username || user?.name || "Habit Builder";
+  const allStreaksZero = habits.length === 0 || habits.every(h => (h.currentStreak || 0) === 0);
+
+  const displayName = user?.username || user?.name || "User";
   const initial = displayName.charAt(0).toUpperCase();
+
+  const cardStyle = {
+    backgroundColor: 'var(--color-surface)',
+    border: '1px solid var(--color-border)',
+    borderRadius: 'var(--radius-md)',
+    padding: 24,
+  };
 
   return (
     <div className="space-y-6">
-      {/* 🔹 Header */}
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-          My Profile
+        <h1
+          className="font-semibold"
+          style={{
+            fontSize: 'var(--text-page-title)',
+            lineHeight: 'var(--lh-title)',
+            color: 'var(--color-text)',
+          }}
+        >
+          Profile
         </h1>
-        <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-          Your personal habit journey, streaks, and milestones.
+        <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-muted)', marginTop: 4 }}>
+          Your habit summary and account info.
         </p>
       </div>
 
-      {/* 🔹 User Overview Hero Card */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200 flex flex-col sm:flex-row sm:items-center gap-5">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl font-bold shadow-md shadow-emerald-500/20 flex-shrink-0">
+      {/* User overview */}
+      <div style={cardStyle} className="flex flex-col sm:flex-row sm:items-center gap-5">
+        <div
+          className="flex items-center justify-center font-semibold flex-shrink-0"
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'var(--color-accent)',
+            color: 'white',
+            fontSize: 'var(--text-page-title)',
+          }}
+        >
           {initial}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100 truncate">
-              {displayName}
-            </h2>
-            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-              Active Member
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            {user?.email || "Personal Habit Journey"}
+          <h2
+            className="font-semibold truncate"
+            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)' }}
+          >
+            {displayName}
+          </h2>
+          <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', marginTop: 2 }}>
+            {user?.email || "No email set"}
           </p>
-          <p className="text-xs text-slate-600 dark:text-zinc-400 mt-2 font-medium">
+          <p style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', marginTop: 6 }}>
             Building positive daily momentum through consistent small wins.
           </p>
         </div>
       </div>
 
-      {/* 🔹 Highlights Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-zinc-300">
-              Total Habits
-            </h2>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CalendarCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-3xl font-extrabold text-slate-900 dark:text-zinc-100">
+      {/* Stats grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div style={cardStyle}>
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', display: 'block' }}>
+            Total habits
+          </span>
+          <p className="tabular-nums font-semibold" style={{ fontSize: 'var(--text-page-title)', color: 'var(--color-text)', marginTop: 4, lineHeight: 'var(--lh-title)' }}>
             {totalHabits}
           </p>
-          <span className="text-xs text-slate-400 dark:text-zinc-500 mt-1 block">
-            Routines created
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', marginTop: 4, display: 'block' }}>
+            Habits created
           </span>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-zinc-300">
-              Strongest Habit
-            </h2>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <Flame className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-zinc-100 truncate capitalize" title={bestHabit.title}>
-            {bestHabit.title || "None"}
+        <div style={cardStyle}>
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', display: 'block' }}>
+            Best streak habit
+          </span>
+          <p
+            className="font-semibold truncate capitalize"
+            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)', marginTop: 4, lineHeight: 'var(--lh-title)' }}
+            title={bestHabit.title || undefined}
+          >
+            {allStreaksZero ? "\u2014" : (bestHabit.title || "\u2014")}
           </p>
-          <p className="text-xs font-medium text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-            <Flame className="w-3.5 h-3.5" />
-            {bestHabit.currentStreak || 0} day streak
-          </p>
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', marginTop: 4, display: 'block' }}>
+            {allStreaksZero ? "Not enough data yet" : `${bestHabit.currentStreak || 0} day streak`}
+          </span>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-700 dark:text-zinc-300">
-              Most Practiced
-            </h2>
-            <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-              <Award className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-zinc-100 truncate capitalize" title={mostCompleted.title}>
-            {mostCompleted.title || "None"}
+        <div style={cardStyle}>
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', display: 'block' }}>
+            Most practiced
+          </span>
+          <p
+            className="font-semibold truncate capitalize"
+            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)', marginTop: 4, lineHeight: 'var(--lh-title)' }}
+            title={mostCompleted.title || undefined}
+          >
+            {(mostCompleted.totalCompleted || 0) === 0 ? "\u2014" : (mostCompleted.title || "\u2014")}
           </p>
-          <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 mt-1">
-            {mostCompleted.totalCompleted || 0} completions recorded
-          </p>
+          <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', marginTop: 4, display: 'block' }}>
+            {(mostCompleted.totalCompleted || 0) === 0 ? "Not enough data yet" : `${mostCompleted.totalCompleted} completions`}
+          </span>
         </div>
       </div>
 
-      {/* 🔹 Motivation Banner */}
-      <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/20 shadow-sm rounded-2xl p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <h2 className="text-sm font-bold text-slate-900 dark:text-zinc-100 uppercase tracking-wide">
-            Philosophy of Calm Consistency
+      {/* Philosophy of calm consistency quote card */}
+      <div
+        style={{
+          ...cardStyle,
+          borderLeft: '3px solid var(--color-accent)',
+        }}
+      >
+        <div className="flex items-center gap-2" style={{ marginBottom: 10 }}>
+          <Quote className="w-4 h-4" style={{ color: 'var(--color-accent)' }} />
+          <h2
+            className="font-medium"
+            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)' }}
+          >
+            Philosophy of calm consistency
           </h2>
         </div>
-        <p className="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed max-w-2xl">
-          Small habits build monumental results. Focus on executing today's tasks without worrying about tomorrow, and let compounding momentum do the rest.
+        <p
+          className="italic"
+          style={{
+            fontSize: 'var(--text-body)',
+            color: 'var(--color-text)',
+            lineHeight: 'var(--lh-body)',
+            maxWidth: '640px',
+          }}
+        >
+          “Small habits build monumental results. Focus on executing today's tasks without worrying about tomorrow, and let compounding momentum do the rest.”
         </p>
       </div>
     </div>
