@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser, loginUser, registerUser } from "../services/api";
-import { ArrowRight, Lock, Mail, UserRound } from "lucide-react";
+import { ArrowRight, Lock, Mail, UserRound, Eye, EyeOff } from "lucide-react";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -9,6 +9,8 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
 
   const [isLogin, setIsLogin] = useState(() => new URLSearchParams(window.location.search).get("mode") !== "signup");
 
@@ -32,14 +34,22 @@ export default function Auth() {
   const handleAuth = async () => {
     try {
       setError("");
+      setFieldErrors({});
 
-      if (!email.trim() || !password) {
-        setError("Enter your user ID and password to continue.");
-        return;
+      const newFieldErrors = {};
+
+      if (!email.trim()) {
+        newFieldErrors.email = "Email is required.";
+      }
+      if (!password) {
+        newFieldErrors.password = "Password is required.";
+      }
+      if (!isLogin && !username.trim()) {
+        newFieldErrors.username = "Username is required.";
       }
 
-      if (!isLogin && !username.trim()) {
-        setError("Choose a username to create your account.");
+      if (Object.keys(newFieldErrors).length > 0) {
+        setFieldErrors(newFieldErrors);
         return;
       }
 
@@ -75,36 +85,102 @@ export default function Auth() {
     }
   };
 
+  const inputStyle = {
+    width: '100%',
+    backgroundColor: 'var(--color-bg)',
+    border: '1px solid var(--color-border)',
+    borderRadius: 'var(--radius-sm)',
+    paddingLeft: 40,
+    paddingRight: 16,
+    paddingTop: 10,
+    paddingBottom: 10,
+    fontSize: 'var(--text-body)',
+    color: 'var(--color-text)',
+    outline: 'none',
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: 'var(--text-body)',
+    fontWeight: 500,
+    color: 'var(--color-text)',
+    marginBottom: 6,
+  };
+
+  const fieldErrorStyle = {
+    fontSize: 'var(--text-caption)',
+    color: 'var(--color-error)',
+    marginTop: 4,
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col justify-center items-center p-4">
+    <div
+      className="min-h-screen flex flex-col justify-center items-center p-4"
+      style={{ backgroundColor: 'var(--color-bg)' }}
+    >
       {/* Branding */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center shadow-md shadow-emerald-500/20 overflow-hidden">
-          <img src="/flame-logo.png" alt="Grind Set" className="w-9 h-9" />
+        <div
+          className="flex items-center justify-center overflow-hidden flex-shrink-0"
+          style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)' }}
+        >
+          <img src="/flame-logo.png" alt="Grind Set" className="w-8 h-8" />
         </div>
-        <div>
-          <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-zinc-100 block">
-            Grind Set
-          </span>
-          <span className="text-xs font-medium text-slate-400 dark:text-zinc-500 tracking-wider uppercase">
-            Daily Momentum
-          </span>
-        </div>
+        <span
+          className="font-semibold tracking-tight"
+          style={{ fontSize: 'var(--text-page-title)', color: 'var(--color-text)' }}
+        >
+          Grind Set
+        </span>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-8 w-full max-w-md hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100 text-center mb-1">
+      <div
+        className="w-full max-w-md"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-md)',
+          padding: 32,
+        }}
+      >
+        <h2
+          className="font-semibold text-center"
+          style={{
+            fontSize: 'var(--text-page-title)',
+            lineHeight: 'var(--lh-title)',
+            color: 'var(--color-text)',
+            marginBottom: 4,
+          }}
+        >
           {isLogin ? "Welcome back" : "Create an account"}
         </h2>
 
-        <p className="text-sm text-slate-500 dark:text-zinc-400 text-center mb-6">
+        <p
+          className="text-center"
+          style={{
+            fontSize: 'var(--text-body)',
+            color: 'var(--color-muted)',
+            marginBottom: 24,
+          }}
+        >
           {isLogin
-            ? "Enter your details to access your daily habit workspace."
-            : "Start building consistent daily routines today."}
+            ? "Sign in to continue."
+            : "Start tracking your daily habits."}
         </p>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs font-medium">
+          <div
+            style={{
+              marginBottom: 16,
+              padding: 12,
+              borderRadius: 'var(--radius-sm)',
+              backgroundColor: 'var(--color-error-bg)',
+              border: '1px solid var(--color-error-border)',
+              color: 'var(--color-error)',
+              fontSize: 'var(--text-caption)',
+              fontWeight: 500,
+            }}
+          >
             {error}
           </div>
         )}
@@ -112,71 +188,87 @@ export default function Auth() {
         <div className="space-y-4">
           {!isLogin && (
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1.5">
-                Username
-              </label>
+              <label style={labelStyle}>Username</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" style={{ color: 'var(--color-muted)' }}>
                   <UserRound className="w-4 h-4" />
                 </div>
                 <input
                   type="text"
                   placeholder="Choose a username"
                   maxLength={30}
-                  className="w-full bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/60 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                  style={{
+                    ...inputStyle,
+                    borderColor: fieldErrors.username ? 'var(--color-error)' : 'var(--color-border)',
+                  }}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
+              {fieldErrors.username && <p style={fieldErrorStyle}>{fieldErrors.username}</p>}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1.5">
-                User ID (Email)
-            </label>
+            <label style={labelStyle}>Email</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" style={{ color: 'var(--color-muted)' }}>
                 <Mail className="w-4 h-4" />
               </div>
               <input
                 type="email"
                 placeholder="name@example.com"
-                className="w-full bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/60 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                style={{
+                  ...inputStyle,
+                  borderColor: fieldErrors.email ? 'var(--color-error)' : 'var(--color-border)',
+                }}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+            {fieldErrors.email && <p style={fieldErrorStyle}>{fieldErrors.email}</p>}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mb-1.5">
-              Password
-            </label>
+            <label style={labelStyle}>Password</label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" style={{ color: 'var(--color-muted)' }}>
                 <Lock className="w-4 h-4" />
               </div>
               <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/60 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                style={{
+                  ...inputStyle,
+                  paddingRight: 44,
+                  borderColor: fieldErrors.password ? 'var(--color-error)' : 'var(--color-border)',
+                }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAuth();
                 }}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                style={{ color: 'var(--color-muted)', background: 'none', border: 'none', cursor: 'pointer', minHeight: 'auto' }}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
+            {fieldErrors.password && <p style={fieldErrorStyle}>{fieldErrors.password}</p>}
           </div>
 
           {isLogin && (
-            <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer" style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}>
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-emerald-500 focus:ring-emerald-500/20"
+                style={{ width: 16, height: 16, minHeight: 16, accentColor: 'var(--color-accent)' }}
               />
               Remember me for 30 days
             </label>
@@ -184,18 +276,39 @@ export default function Auth() {
 
           <button
             onClick={handleAuth}
-            className="w-full mt-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-zinc-100 dark:hover:bg-white dark:text-zinc-900 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="w-full flex items-center justify-center gap-2 font-semibold"
+            style={{
+              marginTop: 8,
+              backgroundColor: 'var(--color-navy)',
+              color: 'var(--color-surface)',
+              padding: '10px 0',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--text-body)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
-            <span>{isLogin ? "Sign In" : "Get Started"}</span>
+            <span>{isLogin ? "Sign in" : "Get started"}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
-        <p className="text-xs text-center text-slate-500 dark:text-zinc-400 mt-6">
+        <p
+          className="text-center"
+          style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)', marginTop: 24 }}
+        >
           {isLogin ? "Don't have an account?" : "Already have an account?"}
           <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="ml-1.5 font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+            onClick={() => { setIsLogin(!isLogin); setError(""); setFieldErrors({}); }}
+            className="font-semibold ml-1.5"
+            style={{
+              color: 'var(--color-accent)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 'var(--text-caption)',
+              minHeight: 'auto',
+            }}
           >
             {isLogin ? "Sign up" : "Sign in"}
           </button>
