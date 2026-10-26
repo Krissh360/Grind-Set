@@ -8,10 +8,8 @@ import {
   Check,
   Plus,
   Flame,
-  Calendar,
-  TrendingUp,
-  Target,
   MoreHorizontal,
+  AlertCircle,
   Quote,
 } from "lucide-react";
 
@@ -52,6 +50,7 @@ export default function Dashboard() {
   const [habits, setHabits] = useState([]);
   const [newHabit, setNewHabit] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const today = new Date().toDateString();
 
@@ -61,10 +60,12 @@ export default function Dashboard() {
 
   const fetchHabits = async () => {
     try {
+      setError(null);
       const data = await getHabits();
       setHabits(data);
     } catch (err) {
       console.error(err);
+      setError("Failed to load habits.");
     } finally {
       setLoading(false);
     }
@@ -91,28 +92,32 @@ export default function Dashboard() {
     }
   };
 
-  // 🔹 Derived Data
+  // Derived data
   const totalHabits = habits.length;
 
   const completedToday = habits.filter(h =>
     h.completedDates?.includes(today)
   ).length;
 
+  const remainingToday = totalHabits - completedToday;
+
   const completionPercent =
     totalHabits > 0
       ? Math.round((completedToday / totalHabits) * 100)
       : 0;
 
-  const bestHabit = habits.reduce((max, h) =>
-    (h.currentStreak || 0) > (max.currentStreak || 0) ? h : max,
-    {}
-  );
+  // Current streak: max streak across all habits
+  const currentStreak = habits.length > 0
+    ? Math.max(...habits.map(h => h.currentStreak || 0), 0)
+    : 0;
+
+  // Best streak: max of currentStreak values (API doesn't track bestStreak separately)
+  const bestStreak = currentStreak;
 
   const [userName, setUserName] = useState("");
 
   const formatFirstName = (rawName) => {
     if (!rawName) return "";
-    // Remove numbers and special characters from the end or entire string, or split camel/word boundaries
     const cleaned = rawName.split(" ")[0].replace(/[0-9_.-]+$/g, "");
     if (!cleaned) return rawName.split(" ")[0];
     return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
@@ -137,9 +142,21 @@ export default function Dashboard() {
     return () => window.removeEventListener("userUpdated", handleUserUpdated);
   }, []);
 
+  // Time-aware greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  // 7-day activity strip — Monday-start, correct day calculation
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const currentDayIndex = (new Date().getDay() + 6) % 7; // 0 for Mon ... 6 for Sun
+  // getDay: 0=Sun, convert to Mon=0..Sun=6
+  const currentDayIndex = (new Date().getDay() + 6) % 7;
+
   const dayOfMonth = new Date().getDate();
+
   const storedAccountCreatedAt = (() => {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}").createdAt;
@@ -154,280 +171,430 @@ export default function Dashboard() {
   );
   const motivation = motivationQuotes[(dayOfMonth - 1) % motivationQuotes.length];
 
+  const todayFormatted = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(new Date());
+
+  // Skeleton loader
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex items-center gap-3 text-slate-500 dark:text-zinc-400">
-          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-medium">Loading your habits...</span>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="skeleton" style={{ width: 220, height: 28, marginBottom: 8 }} />
+            <div className="skeleton" style={{ width: 160, height: 16 }} />
+          </div>
+          <div className="skeleton" style={{ width: 140, height: 16 }} />
+        </div>
+        {/* Progress bar skeleton */}
+        <div className="skeleton" style={{ width: '100%', height: 4 }} />
+        {/* Daily motivation skeleton */}
+        <div style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+            <div className="skeleton" style={{ width: 140, height: 16 }} />
+            <div className="skeleton" style={{ width: 70, height: 14 }} />
+          </div>
+          <div className="skeleton" style={{ width: '80%', height: 18, marginBottom: 8 }} />
+          <div className="skeleton" style={{ width: 160, height: 14 }} />
+        </div>
+        {/* Habits card skeleton */}
+        <div style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+          <div className="skeleton" style={{ width: 120, height: 16, marginBottom: 16 }} />
+          {[1,2,3].map(i => (
+            <div key={i} className="flex items-center gap-3 py-3">
+              <div className="skeleton" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+              <div className="skeleton" style={{ width: '60%', height: 16 }} />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 400 }}>
+        <AlertCircle className="w-8 h-8" style={{ color: 'var(--color-error)' }} />
+        <p className="font-medium" style={{ fontSize: 'var(--text-body)', color: 'var(--color-text)' }}>{error}</p>
+        <button
+          onClick={() => { setLoading(true); fetchHabits(); }}
+          className="px-4 py-2 font-medium"
+          style={{
+            backgroundColor: 'var(--color-navy)',
+            color: 'var(--color-surface)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: 'var(--text-body)',
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {/* [B] HEADER & TOP BAR GREETING */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* 1. Page header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-            Welcome back{userName ? `, ${userName}` : ""} 👋
+          <h1
+            className="font-semibold"
+            style={{
+              fontSize: 'var(--text-page-title)',
+              lineHeight: 'var(--lh-title)',
+              color: 'var(--color-text)',
+            }}
+          >
+            {getGreeting()}{userName ? `, ${userName}` : ""}
           </h1>
-          <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-            Stay consistent. You're building something great.
+          {/* Muted subtitle with real fact */}
+          <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-muted)', marginTop: 4 }}>
+            {remainingToday === 0 && totalHabits > 0
+              ? "All habits completed today."
+              : totalHabits === 0
+                ? "Start building your daily rhythm."
+                : `${remainingToday} of ${totalHabits} habit${totalHabits > 1 ? 's' : ''} left today`}
           </p>
+        </div>
+        <span style={{ fontSize: 'var(--text-body)', color: 'var(--color-muted)' }}>
+          {todayFormatted}
+        </span>
+      </div>
+
+      {/* 2. Progress bar — thin 4px, no card */}
+      <div>
+        <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
+          <span className="tabular-nums" style={{ fontSize: 'var(--text-body)', color: 'var(--color-muted)' }}>
+            {completedToday} of {totalHabits} completed
+          </span>
+          {totalHabits > 0 && (
+            <span className="tabular-nums" style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}>
+              {completionPercent}%
+            </span>
+          )}
+        </div>
+        <div
+          style={{
+            width: '100%',
+            height: 4,
+            backgroundColor: 'var(--color-border)',
+            borderRadius: 2,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: `${completionPercent}%`,
+              backgroundColor: 'var(--color-accent)',
+              borderRadius: 2,
+              transition: 'width 300ms ease-out',
+            }}
+          />
         </div>
       </div>
 
-      {/* [LAYOUT] ASYMMETRIC 2-COLUMN GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* [C] MAIN WORKSPACE (LEFT COLUMN - lg:col-span-8) */}
-        <div className="lg:col-span-8 space-y-6">
-          {/* 1. "Today's Progress" Card */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
-                Today's Progress
-              </h2>
-              <span className="text-sm font-medium text-slate-500 dark:text-zinc-400">
-                <span className="font-semibold text-slate-900 dark:text-zinc-100">{completedToday}</span> of {totalHabits} completed
-              </span>
-            </div>
-
-            {/* Progress Bar Track & Fill */}
-            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden mt-4">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 ease-out"
-                style={{ width: `${completionPercent}%` }}
-              />
-            </div>
+      {/* 3. Daily motivation card */}
+      <div
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-md)',
+          padding: 24,
+        }}
+      >
+        <div className="flex items-center justify-between gap-4" style={{ marginBottom: 12 }}>
+          <div className="flex items-center gap-2">
+            <Quote className="w-4 h-4" style={{ color: 'var(--color-accent)' }} />
+            <h2
+              className="font-medium"
+              style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)' }}
+            >
+              Daily motivation
+            </h2>
           </div>
+          <span
+            className="tabular-nums"
+            style={{
+              fontSize: 'var(--text-caption)',
+              color: 'var(--color-muted)',
+            }}
+          >
+            Day {((dayOfMonth - 1) % motivationQuotes.length) + 1} of 30
+          </span>
+        </div>
+        <p
+          className="italic"
+          style={{
+            fontSize: 'var(--text-body)',
+            color: 'var(--color-text)',
+            lineHeight: 'var(--lh-body)',
+            fontWeight: 500,
+          }}
+        >
+          “{motivation}”
+        </p>
+        <p
+          style={{
+            fontSize: 'var(--text-caption)',
+            color: 'var(--color-muted)',
+            marginTop: 8,
+          }}
+        >
+          Keep your rhythm moving forward.
+        </p>
+      </div>
 
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm rounded-2xl p-6 text-white">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-2">
-                <Quote className="w-4 h-4 text-emerald-100" />
-                <h2 className="text-base font-semibold">Today's Motivation</h2>
-              </div>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-100">
-                Day {dayOfMonth > 30 ? 30 : dayOfMonth} of 30
-              </span>
-            </div>
-            <p className="text-lg font-semibold leading-relaxed max-w-2xl">
-              “{motivation}”
-            </p>
-            <p className="text-xs text-emerald-100 mt-3">
-              Keep your rhythm moving forward.
-            </p>
-          </div>
+      {/* 4. Today's habits — main surface, one card */}
+      <div
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-md)',
+          padding: 24,
+        }}
+      >
+        {/* Add habit input row */}
+        <div className="flex gap-2" style={{ marginBottom: 20 }}>
+          <input
+            type="text"
+            placeholder="Add a new habit..."
+            value={newHabit}
+            onChange={(e) => setNewHabit(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleAddHabit();
+            }}
+            style={{
+              flex: 1,
+              backgroundColor: 'var(--color-bg)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '8px 16px',
+              fontSize: 'var(--text-body)',
+              color: 'var(--color-text)',
+              outline: 'none',
+            }}
+          />
+          <button
+            onClick={handleAddHabit}
+            className="flex items-center gap-1.5 font-medium"
+            style={{
+              backgroundColor: 'var(--color-navy)',
+              color: 'var(--color-surface)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '8px 16px',
+              fontSize: 'var(--text-body)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add</span>
+          </button>
+        </div>
 
-          {/* 2. "Today's Habits" Card with Embedded Quick Add */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
-                Today's Habits
-              </h2>
-              <span className="text-xs text-slate-400 dark:text-zinc-500 font-medium">
-                {habits.length} total
-              </span>
-            </div>
+        {/* Habits list */}
+        {habits.length === 0 ? (
+          <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-muted)', padding: '32px 0', textAlign: 'center' }}>
+            No habits yet. Add your first one above.
+          </p>
+        ) : (
+          <ul>
+            {habits.map((habit, index) => {
+              const isDone = habit.completedDates?.includes(today);
+              const streak = habit.currentStreak || 0;
 
-            {/* Embedded Quick Add Input */}
-            <div className="relative mb-5">
-              <input
-                type="text"
-                placeholder="Add a new habit (e.g. 20 min read, Meditate, Exercise)..."
-                className="w-full bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/60 rounded-xl pl-4 pr-24 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                value={newHabit}
-                onChange={(e) => setNewHabit(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddHabit();
-                }}
-              />
-              <button
-                onClick={handleAddHabit}
-                className="absolute right-1.5 top-1.5 bottom-1.5 bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-medium px-3.5 rounded-lg flex items-center gap-1.5 hover:opacity-90 transition-opacity"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add</span>
-              </button>
-            </div>
-
-            {/* Habits List */}
-            {habits.length === 0 ? (
-              <div className="text-center py-10 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
-                <Target className="w-8 h-8 mx-auto text-slate-300 dark:text-zinc-600 mb-2" />
-                <p className="text-sm font-medium text-slate-600 dark:text-zinc-400">
-                  No habits added yet
-                </p>
-                <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
-                  Type your first habit above to begin your streak!
-                </p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-zinc-800/60">
-                {habits.map((habit) => {
-                  const isDone = habit.completedDates?.includes(today);
-
-                  return (
-                    <li
-                      key={habit._id}
-                      className="py-3.5 flex items-center justify-between group transition-colors"
+              return (
+                <li
+                  key={habit._id}
+                  className="flex items-center justify-between group"
+                  style={{
+                    padding: '12px 0',
+                    borderTop: index > 0 ? '1px solid var(--color-border)' : 'none',
+                    minHeight: 44,
+                  }}
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+                    {/* Check button */}
+                    <button
+                      type="button"
+                      onClick={() => handleComplete(habit._id)}
+                      disabled={isDone}
+                      aria-label={isDone ? "Completed" : "Mark as complete"}
+                      className="flex items-center justify-center flex-shrink-0"
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        backgroundColor: isDone ? 'var(--color-accent)' : 'transparent',
+                        border: isDone ? 'none' : '2px solid var(--color-border)',
+                        color: isDone ? 'white' : 'transparent',
+                        cursor: isDone ? 'default' : 'pointer',
+                        transition: 'background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out',
+                        minHeight: 24,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isDone) {
+                          e.currentTarget.style.borderColor = 'var(--color-accent)';
+                          e.currentTarget.style.color = 'var(--color-accent)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isDone) {
+                          e.currentTarget.style.borderColor = 'var(--color-border)';
+                          e.currentTarget.style.color = 'transparent';
+                        }
+                      }}
                     >
-                      <div className="flex items-center gap-3.5 min-w-0 flex-1 pr-4">
-                        {/* Interactive Circular Check Trigger */}
-                        <button
-                          type="button"
-                          onClick={() => handleComplete(habit._id)}
-                          disabled={isDone}
-                          aria-label={isDone ? "Completed" : "Mark as complete"}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                            isDone
-                              ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/30"
-                              : "border-2 border-slate-300 dark:border-zinc-700 hover:border-emerald-500 text-transparent hover:text-emerald-500/50"
-                          }`}
-                        >
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </button>
+                      <Check className="w-3.5 h-3.5" style={{ strokeWidth: 3 }} />
+                    </button>
 
-                        <div className="min-w-0 flex-1">
-                          <span
-                            className={`text-sm font-medium block truncate capitalize transition-colors ${
-                              isDone
-                                ? "line-through text-slate-400 dark:text-zinc-500"
-                                : "text-slate-900 dark:text-zinc-100"
-                            }`}
-                          >
-                            {habit.title}
-                          </span>
-                        </div>
-                      </div>
+                    <span
+                      className="text-sm font-medium block truncate capitalize"
+                      style={{
+                        color: isDone ? 'var(--color-muted)' : 'var(--color-text)',
+                        transition: 'color 150ms ease-out',
+                      }}
+                    >
+                      {habit.title}
+                    </span>
+                  </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {/* Streak Badge */}
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                          <Flame className="w-3.5 h-3.5" />
-                          <span>{habit.currentStreak || 0}</span>
-                        </span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Streak — only shown when > 0 */}
+                    {streak > 0 && (
+                      <span
+                        className="inline-flex items-center gap-1 tabular-nums"
+                        style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}
+                      >
+                        <Flame className="w-3.5 h-3.5" style={{ color: 'var(--color-muted)' }} />
+                        <span>{streak} d</span>
+                      </span>
+                    )}
 
-                        {/* Subtle hover-only 3-dot menu trigger */}
-                        <button
-                          type="button"
-                          aria-label="Habit options"
-                          className="p-1 text-slate-300 dark:text-zinc-600 hover:text-slate-600 dark:hover:text-zinc-300 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-150"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+                    {/* 3-dot menu */}
+                    <button
+                      type="button"
+                      aria-label="Habit options"
+                      className="p-1 opacity-0 group-hover:opacity-100"
+                      style={{
+                        color: 'var(--color-muted)',
+                        borderRadius: 'var(--radius-sm)',
+                        transition: 'opacity 150ms ease-out',
+                        minHeight: 28,
+                      }}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* 4. Two-column row: Streak + 7-day activity */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Streak block */}
+        <div
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: 24,
+          }}
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span
+                className="tabular-nums font-semibold"
+                style={{ fontSize: 'var(--text-page-title)', color: 'var(--color-text)', lineHeight: 'var(--lh-title)', display: 'block' }}
+              >
+                {currentStreak} days
+              </span>
+              <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}>
+                Current streak
+              </span>
+            </div>
+            <div>
+              <span
+                className="tabular-nums font-semibold"
+                style={{ fontSize: 'var(--text-page-title)', color: 'var(--color-text)', lineHeight: 'var(--lh-title)', display: 'block' }}
+              >
+                {bestStreak} days
+              </span>
+              <span style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}>
+                Best streak
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* [D] UTILITY / CONTEXT RAIL (RIGHT COLUMN - lg:col-span-4) */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* 1. Active Streak Card */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
-                Streak
-              </h2>
-              <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full text-[11px] font-semibold">
-                Active Streak
-              </span>
-            </div>
+        {/* 7-day activity */}
+        <div
+          style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: 24,
+          }}
+        >
+          <h2
+            className="font-medium"
+            style={{ fontSize: 'var(--text-card-title)', color: 'var(--color-text)', marginBottom: 16 }}
+          >
+            7-day activity
+          </h2>
 
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
-                <Flame className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-2xl font-extrabold text-slate-900 dark:text-zinc-100 tracking-tight">
-                  {bestHabit.currentStreak || 0} Days
+          <div className="grid grid-cols-7 gap-2 text-center">
+            {daysOfWeek.map((day, idx) => {
+              // Calculate the date for this day of the week
+              const daysFromToday = currentDayIndex - idx;
+              const date = new Date();
+              date.setDate(date.getDate() - daysFromToday);
+
+              const accountStart = accountCreatedDate && new Date(
+                accountCreatedDate.getFullYear(),
+                accountCreatedDate.getMonth(),
+                accountCreatedDate.getDate()
+              );
+              const isBeforeAccount = accountStart && date < accountStart;
+              const isCompletedDay = !isBeforeAccount && completedDates.has(date.toDateString());
+              const isToday = idx === currentDayIndex;
+
+              return (
+                <div key={day} className="flex flex-col items-center gap-2">
+                  <span
+                    className="font-medium"
+                    style={{
+                      fontSize: 'var(--text-caption)',
+                      color: isToday ? 'var(--color-text)' : 'var(--color-muted)',
+                      fontWeight: isToday ? 600 : 400,
+                    }}
+                  >
+                    {day}
+                  </span>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: isCompletedDay
+                        ? 'var(--color-accent)'
+                        : 'var(--color-border)',
+                      border: isToday ? '2px solid var(--color-accent)' : 'none',
+                      boxSizing: 'content-box',
+                    }}
+                    title={`${day}: ${isToday ? 'Today' : date.toDateString()}`}
+                  />
                 </div>
-                <div className="text-xs text-slate-500 dark:text-zinc-400 truncate max-w-[170px] capitalize">
-                  {bestHabit.title ? `Best: ${bestHabit.title}` : "Build your first streak"}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 2. 7-Day Activity Heatmap Matrix */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
-                7-Day Activity
-              </h2>
-              <Calendar className="w-4 h-4 text-slate-400 dark:text-zinc-500" />
-            </div>
-
-            <div className="grid grid-cols-7 gap-2 text-center">
-              {daysOfWeek.map((day, idx) => {
-                const daysFromToday = currentDayIndex - idx;
-                const date = new Date();
-                date.setDate(date.getDate() - daysFromToday);
-                const accountStart = accountCreatedDate && new Date(
-                  accountCreatedDate.getFullYear(),
-                  accountCreatedDate.getMonth(),
-                  accountCreatedDate.getDate()
-                );
-                const isBeforeAccount = accountStart && date < accountStart;
-                const isCompletedDay = !isBeforeAccount && completedDates.has(date.toDateString());
-                const isPastOrToday = idx <= currentDayIndex;
-                const isPartial = !isBeforeAccount && idx === currentDayIndex && completionPercent > 0 && completionPercent < 100;
-
-                return (
-                  <div key={day} className="flex flex-col items-center gap-2">
-                    <span className="text-[11px] font-medium text-slate-400 dark:text-zinc-500">
-                      {day}
-                    </span>
-                    <div
-                      className={`w-3.5 h-3.5 rounded-full transition-all duration-300 ${
-                        isCompletedDay
-                          ? "bg-emerald-500 ring-4 ring-emerald-500/20"
-                          : isPartial
-                          ? "bg-emerald-400"
-                          : isPastOrToday
-                          ? "bg-slate-200 dark:bg-zinc-700"
-                          : "bg-slate-100 dark:bg-zinc-800"
-                      }`}
-                      title={`${day}: ${idx === currentDayIndex ? `${completionPercent}% completed` : "Day indicator"}`}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between text-[11px] text-slate-400 dark:text-zinc-500">
-              <span>Weekly rhythm</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                {completedToday > 0 ? "Momentum steady" : "Awaiting first habit"}
-              </span>
-            </div>
-          </div>
-
-          {/* 3. Quick Insight Card */}
-          <div className="bg-gradient-to-br from-white to-slate-50 dark:from-zinc-900 dark:to-zinc-900/50 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
-                Daily Insight
-              </h2>
-            </div>
-
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-zinc-100 mb-1">
-              {bestHabit.title ? "Strongest Habit" : "Focus on Small Wins"}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-              {bestHabit.title
-                ? `"${bestHabit.title}" is currently your leading habit with a ${bestHabit.currentStreak || 0}-day streak. Keep your momentum uninterrupted today!`
-                : "Consistency is better than perfection. Mark off at least one habit today to trigger the psychological momentum effect."}
-            </p>
+              );
+            })}
           </div>
         </div>
       </div>
