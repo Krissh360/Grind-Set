@@ -5,14 +5,14 @@ import {
   Plus,
   Trash2,
   Flame,
-  CheckCircle2,
-  ClipboardList,
+  AlertCircle,
 } from "lucide-react";
 
 export default function Habits() {
   const [habits, setHabits] = useState([]);
   const [newHabit, setNewHabit] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const today = new Date().toDateString();
 
@@ -22,10 +22,12 @@ export default function Habits() {
 
   const fetchHabits = async () => {
     try {
+      setError(null);
       const data = await getHabits();
       setHabits(data);
     } catch (err) {
       console.error(err);
+      setError("Failed to load habits.");
     } finally {
       setLoading(false);
     }
@@ -61,13 +63,47 @@ export default function Habits() {
     }
   };
 
+  // Skeleton loader
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex items-center gap-3 text-slate-500 dark:text-zinc-400">
-          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-medium">Loading habits...</span>
+      <div className="space-y-6">
+        <div>
+          <div className="skeleton" style={{ width: 140, height: 28, marginBottom: 8 }} />
+          <div className="skeleton" style={{ width: 240, height: 16 }} />
         </div>
+        <div style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 24 }}>
+          <div className="skeleton" style={{ width: '100%', height: 44, marginBottom: 16 }} />
+          {[1,2,3].map(i => (
+            <div key={i} className="flex items-center gap-3 py-3">
+              <div className="skeleton" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+              <div className="skeleton" style={{ width: '60%', height: 16 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 400 }}>
+        <AlertCircle className="w-8 h-8" style={{ color: 'var(--color-error)' }} />
+        <p className="font-medium" style={{ fontSize: 'var(--text-body)', color: 'var(--color-text)' }}>{error}</p>
+        <button
+          onClick={() => { setLoading(true); fetchHabits(); }}
+          className="px-4 py-2 font-medium"
+          style={{
+            backgroundColor: 'var(--color-navy)',
+            color: 'var(--color-surface)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: 'var(--text-body)',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -79,121 +115,171 @@ export default function Habits() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-            My Habits
+          <h1
+            className="font-semibold"
+            style={{
+              fontSize: 'var(--text-page-title)',
+              lineHeight: 'var(--lh-title)',
+              color: 'var(--color-text)',
+            }}
+          >
+            My habits
           </h1>
-          <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-            Organize, track, and maintain your regular routines.
+          <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-muted)', marginTop: 4 }}>
+            Manage and track your daily habits.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {completedCount} / {habits.length} Done Today
-          </span>
-        </div>
+        <span
+          className="tabular-nums font-medium"
+          style={{ fontSize: 'var(--text-body)', color: 'var(--color-muted)' }}
+        >
+          {completedCount} / {habits.length} done today
+        </span>
       </div>
 
-      {/* Add Habit Card */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100 mb-4">
-          Add New Habit
-        </h2>
-
-        <div className="flex gap-2">
+      {/* Habits card with embedded add input */}
+      <div
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-md)',
+          padding: 24,
+        }}
+      >
+        {/* Add habit input */}
+        <div className="flex gap-2" style={{ marginBottom: 20 }}>
           <input
             type="text"
-            placeholder="What habit do you want to build?"
-            className="flex-1 bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+            placeholder="Add a new habit..."
             value={newHabit}
             onChange={(e) => setNewHabit(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleAddHabit();
             }}
+            style={{
+              flex: 1,
+              backgroundColor: 'var(--color-bg)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '8px 16px',
+              fontSize: 'var(--text-body)',
+              color: 'var(--color-text)',
+              outline: 'none',
+            }}
           />
-
           <button
             onClick={handleAddHabit}
-            className="bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-5 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"
+            className="flex items-center gap-1.5 font-medium"
+            style={{
+              backgroundColor: 'var(--color-navy)',
+              color: 'var(--color-surface)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '8px 16px',
+              fontSize: 'var(--text-body)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
             <Plus className="w-4 h-4" />
             <span>Add</span>
           </button>
         </div>
-      </div>
 
-      {/* Habits List Card */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl p-6 hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-zinc-100">
-            All Active Habits
-          </h2>
-          <span className="text-xs text-slate-400 dark:text-zinc-500 font-medium">
-            {habits.length} habits
-          </span>
-        </div>
-
+        {/* Habits list */}
         {habits.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl">
-            <ClipboardList className="w-8 h-8 mx-auto text-slate-300 dark:text-zinc-600 mb-2" />
-            <p className="text-sm font-medium text-slate-600 dark:text-zinc-400">
-              No habits created yet.
-            </p>
-            <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1">
-              Start building your daily ritual by adding a new habit above.
-            </p>
-          </div>
+          <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-muted)', padding: '32px 0', textAlign: 'center' }}>
+            No habits yet. Add your first one above.
+          </p>
         ) : (
-          <ul className="divide-y divide-slate-100 dark:divide-zinc-800/60">
-            {habits.map((habit) => {
+          <ul>
+            {habits.map((habit, index) => {
               const isDone = habit.completedDates?.includes(today);
+              const streak = habit.currentStreak || 0;
 
               return (
                 <li
                   key={habit._id}
-                  className="py-3.5 flex items-center justify-between group transition-colors"
+                  className="flex items-center justify-between group"
+                  style={{
+                    padding: '12px 0',
+                    borderTop: index > 0 ? '1px solid var(--color-border)' : 'none',
+                    minHeight: 44,
+                  }}
                 >
-                  <div className="flex items-center gap-3.5 min-w-0 flex-1 pr-4">
-                    {/* Circular Check Button */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+                    {/* Check button */}
                     <button
                       type="button"
                       onClick={() => handleComplete(habit._id)}
                       disabled={isDone}
                       aria-label={isDone ? "Completed" : "Mark as complete"}
-                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                        isDone
-                          ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/30"
-                          : "border-2 border-slate-300 dark:border-zinc-700 hover:border-emerald-500 text-transparent hover:text-emerald-500/50"
-                      }`}
+                      className="flex items-center justify-center flex-shrink-0"
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        backgroundColor: isDone ? 'var(--color-accent)' : 'transparent',
+                        border: isDone ? 'none' : '2px solid var(--color-border)',
+                        color: isDone ? 'white' : 'transparent',
+                        cursor: isDone ? 'default' : 'pointer',
+                        transition: 'background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out',
+                        minHeight: 24,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isDone) {
+                          e.currentTarget.style.borderColor = 'var(--color-accent)';
+                          e.currentTarget.style.color = 'var(--color-accent)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isDone) {
+                          e.currentTarget.style.borderColor = 'var(--color-border)';
+                          e.currentTarget.style.color = 'transparent';
+                        }
+                      }}
                     >
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <Check className="w-3.5 h-3.5" style={{ strokeWidth: 3 }} />
                     </button>
 
-                    <div className="min-w-0 flex-1">
-                      <span
-                        className={`text-sm font-medium block truncate capitalize transition-colors ${
-                          isDone
-                            ? "line-through text-slate-400 dark:text-zinc-500"
-                            : "text-slate-900 dark:text-zinc-100"
-                        }`}
-                      >
-                        {habit.title}
-                      </span>
-                    </div>
+                    <span
+                      className="text-sm font-medium block truncate capitalize"
+                      style={{
+                        color: isDone ? 'var(--color-muted)' : 'var(--color-text)',
+                        transition: 'color 150ms ease-out',
+                      }}
+                    >
+                      {habit.title}
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* Streak Badge */}
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                      <Flame className="w-3.5 h-3.5" />
-                      <span>{habit.currentStreak || 0}</span>
-                    </span>
+                    {/* Streak — only when > 0 */}
+                    {streak > 0 && (
+                      <span
+                        className="inline-flex items-center gap-1 tabular-nums"
+                        style={{ fontSize: 'var(--text-caption)', color: 'var(--color-muted)' }}
+                      >
+                        <Flame className="w-3.5 h-3.5" style={{ color: 'var(--color-muted)' }} />
+                        <span>{streak} d</span>
+                      </span>
+                    )}
 
-                    {/* Subtle hover-only delete button */}
+                    {/* Delete button */}
                     <button
                       onClick={() => handleDelete(habit._id)}
                       aria-label="Delete habit"
-                      className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150"
+                      className="p-1.5 opacity-0 group-hover:opacity-100"
+                      style={{
+                        color: 'var(--color-muted)',
+                        borderRadius: 'var(--radius-sm)',
+                        transition: 'opacity 150ms ease-out, color 150ms ease-out',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        minHeight: 28,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-error)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-muted)'; }}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -206,4 +292,4 @@ export default function Habits() {
       </div>
     </div>
   );
-}
+}
