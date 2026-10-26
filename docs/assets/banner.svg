@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="t d">
+  <title id="t">Grind Set</title>
+  <desc id="d">Grind Set banner: daily momentum for meaningful habits.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F172A"/>
+      <stop offset="1" stop-color="#064E3B"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="320" rx="20" fill="url(#bg)"/>
+
+  <!-- decorative 14-day bars -->
+  <g fill="#34D399" opacity="0.18">
+    <rect x="720" y="210" width="26" height="60" rx="4"/>
+    <rect x="756" y="180" width="26" height="90" rx="4"/>
+    <rect x="792" y="225" width="26" height="45" rx="4"/>
+    <rect x="828" y="150" width="26" height="120" rx="4"/>
+    <rect x="864" y="120" width="26" height="150" rx="4"/>
+    <rect x="900" y="165" width="26" height="105" rx="4"/>
+    <rect x="936" y="95" width="26" height="175" rx="4"/>
+    <rect x="972" y="135" width="26" height="135" rx="4"/>
+    <rect x="1008" y="75" width="26" height="195" rx="4"/>
+    <rect x="1044" y="105" width="26" height="165" rx="4"/>
+    <rect x="1080" y="55" width="26" height="215" rx="4"/>
+  </g>
+
+  <!-- flame + check mark logo -->
+  <g transform="translate(84 76)">
+    <path d="M70 0 C 100 40 128 62 118 112 C 112 142 88 160 62 160 C 30 160 6 134 12 98 C 16 74 36 62 46 42 C 50 62 58 66 64 66 C 64 44 62 22 70 0 Z" fill="url(#flame)"/>
+    <path d="M26 98 L52 124 L98 76" fill="none" stroke="#0F172A" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <text x="250" y="150" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="68" font-weight="700" fill="#FFFFFF">Grind Set</text>
+  <text x="252" y="196" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="26" fill="#A7F3D0">Daily momentum for meaningful habits.</text>
+  <text x="252" y="240" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="18" fill="#94A3B8">React · Express · MongoDB · JWT</text>
+</svg>

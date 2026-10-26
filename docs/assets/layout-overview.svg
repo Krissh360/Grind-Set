@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" role="img" aria-labelledby="t d">
+  <title id="t">Grind Set application layout</title>
+  <desc id="d">Schematic of the authenticated layout: sidebar navigation with theme toggle, top navbar, and the Dashboard content cards.</desc>
+  <style>
+    text { font-family: Inter, 'Segoe UI', Arial, sans-serif; }
+    .card { fill: #FFFFFF; stroke: #E5E7EB; stroke-width: 1.5; }
+    .lbl  { font-size: 14px; font-weight: 600; fill: #0F172A; }
+    .sub  { font-size: 12px; fill: #64748B; }
+    .nav  { font-size: 13px; fill: #64748B; }
+  </style>
+  <rect width="1000" height="560" rx="14" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="1.5"/>
+
+  <!-- sidebar -->
+  <rect x="0" y="0" width="210" height="560" rx="14" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5"/>
+  <circle cx="38" cy="40" r="12" fill="#059669"/>
+  <text x="58" y="45" class="lbl" font-size="16">Grind Set</text>
+  <rect x="14" y="82" width="182" height="34" rx="6" fill="#F1F5F9"/>
+  <rect x="14" y="82" width="3" height="34" fill="#059669"/>
+  <text x="34" y="104" class="lbl">Dashboard</text>
+  <text x="34" y="144" class="nav">Habits</text>
+  <text x="34" y="180" class="nav">Analytics</text>
+  <text x="34" y="216" class="nav">Profile</text>
+  <text x="34" y="252" class="nav">Settings</text>
+  <line x1="14" y1="500" x2="196" y2="500" stroke="#E5E7EB"/>
+  <text x="26" y="530" class="sub">Theme</text>
+  <rect x="120" y="513" width="68" height="26" rx="6" fill="#FAFAFA" stroke="#E5E7EB"/>
+  <text x="136" y="531" class="sub">Light</text>
+
+  <!-- navbar -->
+  <rect x="210" y="0" width="790" height="56" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.5"/>
+  <text x="232" y="34" class="sub">Navbar · sidebar toggle · account</text>
+
+  <!-- greeting -->
+  <text x="240" y="92" font-size="22" font-weight="700" fill="#0F172A">Good morning, Alex</text>
+  <text x="240" y="112" class="sub">2 of 4 habits left today</text>
+  <rect x="240" y="126" width="720" height="4" rx="2" fill="#E5E7EB"/>
+  <rect x="240" y="126" width="360" height="4" rx="2" fill="#059669"/>
+
+  <!-- motivation card -->
+  <rect x="240" y="146" width="720" height="72" rx="10" class="card"/>
+  <text x="260" y="172" class="lbl">Daily motivation</text>
+  <text x="260" y="196" class="sub" font-style="italic">"Momentum begins with one completed action."</text>
+  <text x="880" y="172" class="sub">Day 9 of 30</text>
+
+  <!-- streak + 7-day -->
+  <rect x="240" y="232" width="350" height="104" rx="10" class="card"/>
+  <text x="260" y="278" font-size="24" font-weight="700" fill="#0F172A">6 days</text>
+  <text x="260" y="300" class="sub">Current streak</text>
+  <text x="430" y="278" font-size="24" font-weight="700" fill="#0F172A">6 days</text>
+  <text x="430" y="300" class="sub">Best streak</text>
+
+  <rect x="610" y="232" width="350" height="104" rx="10" class="card"/>
+  <text x="630" y="256" class="lbl">7-day activity</text>
+  <g fill="#059669">
+    <circle cx="646" cy="296" r="6"/><circle cx="688" cy="296" r="6"/><circle cx="730" cy="296" r="6"/>
+    <circle cx="772" cy="296" r="6"/><circle cx="814" cy="296" r="6"/>
+  </g>
+  <g fill="#E5E7EB">
+    <circle cx="856" cy="296" r="6"/><circle cx="898" cy="296" r="6"/>
+  </g>
+  <g class="sub" text-anchor="middle">
+    <text x="646" y="324">Mon</text><text x="688" y="324">Tue</text><text x="730" y="324">Wed</text>
+    <text x="772" y="324">Thu</text><text x="814" y="324">Fri</text><text x="856" y="324">Sat</text><text x="898" y="324">Sun</text>
+  </g>
+
+  <!-- habits card -->
+  <rect x="240" y="350" width="720" height="190" rx="10" class="card"/>
+  <rect x="260" y="368" width="590" height="32" rx="6" fill="#FAFAFA" stroke="#E5E7EB"/>
+  <text x="276" y="389" class="sub">Add a new habit...</text>
+  <rect x="862" y="368" width="78" height="32" rx="6" fill="#0F172A"/>
+  <text x="882" y="389" font-size="13" font-weight="600" fill="#FFFFFF">+ Add</text>
+
+  <circle cx="276" cy="428" r="10" fill="#059669"/>
+  <text x="298" y="433" class="lbl" fill="#64748B">Read for 20 minutes</text>
+  <text x="880" y="433" class="sub">6 d</text>
+  <line x1="260" y1="448" x2="940" y2="448" stroke="#E5E7EB"/>
+  <circle cx="276" cy="470" r="10" fill="none" stroke="#E5E7EB" stroke-width="2"/>
+  <text x="298" y="475" class="lbl">Morning workout</text>
+  <text x="880" y="475" class="sub">3 d</text>
+  <line x1="260" y1="490" x2="940" y2="490" stroke="#E5E7EB"/>
+  <circle cx="276" cy="512" r="10" fill="none" stroke="#E5E7EB" stroke-width="2"/>
+  <text x="298" y="517" class="lbl">Write journal</text>
+</svg>
